@@ -2,6 +2,16 @@
   "name": "proto-form-kit",
   "version": "0.1.0",
   "description": "Turn Protocol Buffer schemas into form-friendly metadata and JSON examples.",
+  "keywords": [
+    "protobuf",
+    "proto3",
+    "forms",
+    "api-tools",
+    "schema",
+    "typescript",
+    "browser",
+    "developer-tools"
+  ],
   "type": "module",
   "sideEffects": false,
   "license": "MPL-2.0",
