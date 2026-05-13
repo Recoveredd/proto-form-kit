@@ -4,6 +4,10 @@ Turn Protocol Buffer source text into form-friendly metadata, service input/outp
 
 `proto-form-kit` is meant for admin tools, API explorers, docs generators and internal dashboards that need to inspect a `.proto` file in the browser or in Node without generating a gRPC client.
 
+## Demo
+
+[Try the interactive demo](https://packages.wasta-wocket.fr/proto-form-kit/)
+
 ## Install
 
 ```bash
