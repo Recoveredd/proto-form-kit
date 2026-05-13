@@ -1,0 +1,50 @@
+{
+  "name": "proto-form-kit",
+  "version": "0.1.0",
+  "description": "Turn Protocol Buffer schemas into form-friendly metadata and JSON examples.",
+  "type": "module",
+  "sideEffects": false,
+  "license": "MPL-2.0",
+  "author": "Recoveredd",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Recoveredd/proto-form-kit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Recoveredd/proto-form-kit/issues"
+  },
+  "homepage": "https://github.com/Recoveredd/proto-form-kit#readme",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepack": "npm run build",
+    "test": "vitest run --config vitest.config.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "protobufjs": "^7.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "typescript": "^5.4.5",
+    "vitest": "^4.1.6"
+  }
+}
