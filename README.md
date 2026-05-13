@@ -1,8 +1,18 @@
 # proto-form-kit
 
+[![License: MPL-2.0](https://img.shields.io/badge/license-MPL--2.0-blue.svg)](LICENSE)
+[![CI](https://github.com/Recoveredd/proto-form-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/Recoveredd/proto-form-kit/actions/workflows/ci.yml)
+
 Turn Protocol Buffer source text into form-friendly metadata, service input/output hints and safe JSON examples.
 
 `proto-form-kit` is meant for admin tools, API explorers, docs generators and internal dashboards that need to inspect a `.proto` file in the browser or in Node without generating a gRPC client.
+
+## Package quality
+
+- TypeScript types are generated from the source.
+- ESM-only package marked as side-effect free for bundlers.
+- CI runs `npm ci`, `typecheck`, `build`, and `test`.
+- Tested on Node.js 20 and 22 with GitHub Actions.
 
 ## Demo
 
