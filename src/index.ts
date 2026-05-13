@@ -1,4 +1,4 @@
-import * as protobuf from 'protobufjs';
+import protobuf from 'protobufjs';
 
 export type ProtoDiagnosticSeverity = 'error' | 'warning' | 'info';
 
@@ -31,6 +31,16 @@ export interface ProtoEnumSchema {
 
 export type ProtoFieldKind = 'scalar' | 'enum' | 'message' | 'map' | 'unknown';
 export type ProtoFieldLabel = 'optional' | 'required' | 'repeated' | 'map';
+export type ProtoFieldControl =
+  | 'text'
+  | 'number'
+  | 'checkbox'
+  | 'bytes'
+  | 'select'
+  | 'fieldset'
+  | 'list'
+  | 'map'
+  | 'unknown';
 
 export interface ProtoFieldSchema {
   name: string;
@@ -38,6 +48,7 @@ export interface ProtoFieldSchema {
   id: number;
   type: string;
   kind: ProtoFieldKind;
+  control: ProtoFieldControl;
   label: ProtoFieldLabel;
   repeated: boolean;
   required: boolean;
@@ -46,6 +57,8 @@ export interface ProtoFieldSchema {
   keyType?: string;
   valueType?: string;
   valueKind?: Exclude<ProtoFieldKind, 'map'>;
+  enumValues?: ProtoEnumValueSchema[];
+  valueEnumValues?: ProtoEnumValueSchema[];
   oneof?: string;
   defaultValue?: unknown;
   comment?: string;
@@ -114,6 +127,12 @@ export interface ProtoMethodFormSchema {
   method: ProtoMethodSchema;
   input: ProtoMessageSchema | null;
   output: ProtoMessageSchema | null;
+  diagnostics: ProtoDiagnostic[];
+}
+
+export interface ProtoMethodExample {
+  input: Record<string, unknown> | null;
+  output: Record<string, unknown> | null;
   diagnostics: ProtoDiagnostic[];
 }
 
@@ -284,6 +303,29 @@ export function createProtoExample(
   return buildMessageExample(schema, message, options, 0, new Set());
 }
 
+export function createProtoMethodExample(
+  schema: ProtoFormSchema,
+  serviceName: string,
+  methodName: string,
+  options: ProtoExampleOptions = {}
+): ProtoMethodExample | null {
+  const method = getMethodFormSchema(schema, serviceName, methodName);
+
+  if (!method) {
+    return null;
+  }
+
+  return {
+    input: method.input
+      ? buildMessageExample(schema, method.input, options, 0, new Set())
+      : null,
+    output: method.output
+      ? buildMessageExample(schema, method.output, options, 0, new Set())
+      : null,
+    diagnostics: method.diagnostics
+  };
+}
+
 function emptySchema(diagnostic: ProtoDiagnostic): ProtoFormSchema {
   return {
     ok: false,
@@ -398,12 +440,14 @@ function buildFieldSchema(field: protobuf.Field, message: protobuf.Type): ProtoF
   const keyType = isMap ? field.keyType : undefined;
   const valueKind = resolveFieldKind(field);
   const kind = isMap ? 'map' : valueKind;
+  const enumValues = valueKind === 'enum' ? getResolvedEnumValues(field.resolvedType) : undefined;
   const fieldSchema: ProtoFieldSchema = {
     name: field.name,
     jsonName: lowerCamelCase(field.name),
     id: field.id,
     type: field.type,
     kind,
+    control: getFieldControl(field, kind, valueKind),
     label: getFieldLabel(field, isMap),
     repeated: field.repeated,
     required: field.required,
@@ -412,6 +456,8 @@ function buildFieldSchema(field: protobuf.Field, message: protobuf.Type): ProtoF
     keyType,
     valueType: isMap ? field.type : undefined,
     valueKind: isMap ? valueKind : undefined,
+    enumValues: !isMap ? enumValues : undefined,
+    valueEnumValues: isMap ? enumValues : undefined,
     oneof: field.partOf?.name,
     defaultValue: normalizeDefaultValue(field.defaultValue),
     comment: field.comment ?? undefined,
@@ -419,6 +465,18 @@ function buildFieldSchema(field: protobuf.Field, message: protobuf.Type): ProtoF
   };
 
   return fieldSchema;
+}
+
+function getResolvedEnumValues(resolvedType: protobuf.Field['resolvedType']): ProtoEnumValueSchema[] | undefined {
+  if (!(resolvedType instanceof protobuf.Enum)) {
+    return undefined;
+  }
+
+  return Object.entries(resolvedType.values).map(([name, value]) => ({
+    name,
+    value,
+    comment: resolvedType.comments[name] ?? undefined
+  }));
 }
 
 function resolveFieldKind(field: protobuf.Field): Exclude<ProtoFieldKind, 'map'> {
@@ -451,6 +509,46 @@ function getFieldLabel(field: protobuf.Field, isMap: boolean): ProtoFieldLabel {
   }
 
   return 'optional';
+}
+
+function getFieldControl(
+  field: protobuf.Field,
+  kind: ProtoFieldKind,
+  valueKind: Exclude<ProtoFieldKind, 'map'>
+): ProtoFieldControl {
+  if (kind === 'map') {
+    return 'map';
+  }
+
+  if (field.repeated) {
+    return 'list';
+  }
+
+  if (valueKind === 'enum') {
+    return 'select';
+  }
+
+  if (valueKind === 'message') {
+    return 'fieldset';
+  }
+
+  if (valueKind === 'scalar') {
+    if (field.type === 'bool') {
+      return 'checkbox';
+    }
+
+    if (field.type === 'bytes') {
+      return 'bytes';
+    }
+
+    if (field.type === 'string') {
+      return 'text';
+    }
+
+    return 'number';
+  }
+
+  return 'unknown';
 }
 
 function buildMessageExample(

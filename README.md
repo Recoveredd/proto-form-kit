@@ -14,6 +14,7 @@ npm install proto-form-kit
 
 ```ts
 import {
+  createProtoMethodExample,
   createProtoExample,
   getMethodFormSchema,
   parseProtoFormSchema
@@ -51,6 +52,7 @@ const schema = parseProtoFormSchema(`
 
 const method = getMethodFormSchema(schema, 'ProductCatalog', 'ListProducts');
 const example = createProtoExample(schema, 'ListProductsRequest');
+const methodExample = createProtoMethodExample(schema, 'ProductCatalog', 'ListProducts');
 
 console.log(method?.input?.fields);
 console.log(example);
@@ -59,6 +61,9 @@ console.log(example);
 //   tags: [''],
 //   limitsByRegion: { key: 0 }
 // }
+
+console.log(methodExample?.input);
+console.log(methodExample?.output);
 ```
 
 ## API
@@ -111,6 +116,20 @@ method?.method.clientStreaming;
 method?.method.serverStreaming;
 ```
 
+### `createProtoMethodExample(schema, serviceName, methodName, options?)`
+
+Builds JSON-friendly input and output examples for a service method.
+
+```ts
+const examples = createProtoMethodExample(schema, 'ProductCatalog', 'ListProducts');
+
+console.log(examples?.input);
+console.log(examples?.output);
+console.log(examples?.diagnostics);
+```
+
+This is the quickest helper when you are building a small API explorer or documentation page from a service definition.
+
 ### `createProtoExample(schema, messageName, options?)`
 
 Builds a JSON-friendly example object from a message schema.
@@ -133,6 +152,42 @@ Example generation rules:
 - maps become one-entry objects
 - recursive messages stop at `maxDepth`
 - oneof groups include the first field by default, or no field when `includeOneof: false`
+
+## Form metadata
+
+Each field includes a neutral `control` hint so UI code does not have to reverse-engineer protobuf types every time:
+
+```ts
+const product = schema.messages.find((message) => message.name === 'Product');
+
+for (const field of product?.fields ?? []) {
+  console.log(field.name, field.control);
+}
+```
+
+Control values are:
+
+- `text` for strings
+- `number` for numeric scalar fields
+- `checkbox` for booleans
+- `bytes` for bytes
+- `select` for enum fields
+- `fieldset` for message fields
+- `list` for repeated fields
+- `map` for map fields
+- `unknown` for unresolved types
+
+Enum fields also expose `enumValues` directly:
+
+```ts
+const statusField = product?.fields.find((field) => field.name === 'status');
+
+console.log(statusField?.enumValues);
+// [
+//   { name: 'STATUS_UNKNOWN', value: 0 },
+//   { name: 'STATUS_ACTIVE', value: 1 }
+// ]
+```
 
 ## Supported schema features
 

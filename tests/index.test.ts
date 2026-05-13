@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  createProtoMethodExample,
   createProtoExample,
   getMessageFormSchema,
   getMethodFormSchema,
@@ -61,6 +62,7 @@ describe('parseProtoFormSchema', () => {
         expect.objectContaining({
           name: 'tags',
           kind: 'scalar',
+          control: 'list',
           label: 'repeated',
           repeated: true
         }),
@@ -68,6 +70,7 @@ describe('parseProtoFormSchema', () => {
           name: 'limits_by_region',
           jsonName: 'limitsByRegion',
           kind: 'map',
+          control: 'map',
           keyType: 'string',
           valueType: 'int32',
           valueKind: 'scalar'
@@ -105,6 +108,38 @@ describe('parseProtoFormSchema', () => {
       query: '',
       tags: [''],
       limitsByRegion: { key: 0 }
+    });
+  });
+
+  it('exposes enum values and method input/output examples for form UIs', () => {
+    const schema = parseProtoFormSchema(inventoryProto);
+    const product = getMessageFormSchema(schema, 'Product');
+    const status = product?.fields.find((field) => field.name === 'status');
+    const methodExample = createProtoMethodExample(schema, 'ProductCatalog', 'ListProducts');
+
+    expect(status).toEqual(
+      expect.objectContaining({
+        kind: 'enum',
+        control: 'select',
+        enumValues: [
+          { name: 'STATUS_UNKNOWN', value: 0 },
+          { name: 'STATUS_ACTIVE', value: 1 }
+        ]
+      })
+    );
+    expect(methodExample?.input).toEqual({
+      query: '',
+      tags: [''],
+      limitsByRegion: { key: 0 }
+    });
+    expect(methodExample?.output).toEqual({
+      products: [
+        {
+          id: '',
+          status: 'STATUS_UNKNOWN',
+          cents: '0'
+        }
+      ]
     });
   });
 
